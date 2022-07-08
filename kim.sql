@@ -1552,6 +1552,517 @@ CHECK KEY(CK)
 */
 --DEFAULT 오라클에서는 제약조건에 포함x MS-SQL에서 포함됨.
 
+--(22-07-08기준)
+--[[제약조건]]
+--PRIMARY KEY 값이 중간에 있기 때문에 가독성이 약간 떨어지는 편
+CREATE TABLE CUSTOMER
+(ID NUMBER(4) CONSTRAINT CUSTOMER_ID_PK PRIMARY KEY,
+NAME VARCHAR2(10),
+NO NUMBER(4));
+--테이블 생성
+
+SELECT * FROM USER_CONSTRAINTS;
+--DICTIONARY 확인, 생성된 테이블의 정보가 들어가 있어야한다.
+
+--[TABLE LEVEL] 사용빈도 더 높음
+CREATE TABLE ORDERS
+(NO NUMBER(4),
+SNO NUMBER(4),
+NAME VARCHAR2(10),
+COUNT NUMBER(7),
+CONSTRAINT ORDERS_NO_PK PRIMARY KEY(NO));
+--컬럼을 다 생성한 후 제약조건을 생성하는 방식
+--PK를 나중에 생성하기 때문에 반드시 PK뒤에 컬럼명을 명시해야함
+SELECT * FROM USER_CONSTRAINTS;
+DESC ORDERS;
+DESC CUSTOMER;
+
+--[FOREIGN KEY]
+--CUSTOMER와 ORDERS 사이에 FOREIGN KEY를 만들것임
+--NO라는 COLUMN을 참조 할 수 있게 FOREIGN KEY 생성
+--이미 테이블이 생성된 상태
+--CUSTOMER가 ORDERS를 참조하는 것이기 때문에 FOREIGN KEY는 CUSTOMER에 생성함
+ALTER TABLE CUSTOMER
+ADD CONSTRAINT CUSTOMER_NO_FK FOREIGN KEY(NO)
+REFERENCES ORDERS(NO); --ORDERS의 NO를 참조해야함
+
+--ORDERS를 참조 하기 때문에 ORDERS를 생성한 후 CUSTOMER를 생성해야한다.
+--우리는 이미 만든 테이블에 값을 넣는 것이기 때문에 순서는 상관 x
+
+SELECT * FROM USER_CONSTRAINTS;
+--참조키는 데이터 타입이 동일해야하며 참조하는 값이 UK OR PK여야한다
+
+SELECT * FROM ORDERS;
+INSERT INTO ORDERS VALUES (10,100,'AAA',1);
+INSERT INTO ORDERS VALUES (20,200,'BBB',2);
+INSERT INTO ORDERS VALUES (30,300,'CCC',3);
+
+SELECT * FROM ORDERS;
+
+SELECT * FROM CUSTOMER;
+
+INSERT INTO CUSTOMER VALUES (1,'SUZI',20); --실행 O
+-- 위에 NO와 동일해야하기 때문에 같은 값의 숫자를 넣어 실행O
+INSERT INTO CUSTOMER VALUES (1,'INNA',20); --실행 X
+-- PK(NO)를 동일한 값을 넣었기 때문에 에러가 난다.
+
+INSERT INTO CUSTOMER VALUES (2,'INNA',30); --실행 O
+ 
+INSERT INTO CUSTOMER VALUES (3,'SHIN',40); --실행 X
+--FOREIGN KEY 에러가 뜬다. 40은 위에 값 중에 없기 때문
+
+COMMIT;
+--방금 입력했던 INSERT문이 DB에 들어갔다. 
+--메모리상에 있던 정보를 파일에 저장시켜주는 것을 COMMIT이라고 한다.
+
+RENAME CATALOG TO CATALOGS;
+--CATALOG라는 키가 내부적으로 존재하기 때문에 원치 않은 데이터 공간 생성됨
+--CATALOGS로 이름을 변경함.
+
+--테이블 만들면서 제약조건 생성
+CREATE TABLE CATALOGS
+(CATALOG NUMBER(4) CONSTRAINT CATALOG_CATALOGNO_PK PRIMARY KEY,
+NAME VARCHAR2(10),
+NO NUMBER(4) CONSTRAINT  CATALOG_FK REFERENCES ORDERS(NO));
+
+SELECT * FROM USER_CONSTRAINTS;
+
+SELECT * FROM CATALOGS;
+DESC CATALOGS;
+
+INSERT INTO CATALOGS VALUES (1,'ABC',30);
+INSERT INTO CATALOGS VALUES (2,'DEF',40);
+
+--UNIQUE KEY
+--중복값 허용 X, NULL은 허용, NULL은 여러개 생성 가능
+SELECT * FROM ORDERS;
+DESC ORDERS;
+
+--이미 생성된 테이블에 제약조건 만들기
+ALTER TABLE ORDERS
+ADD CONSTRAINT ORDERS_SNO_UK UNIQUE(SNO);
+
+SELECT * FROM USER_CONSTRAINTS;
+
+SELECT * FROM ORDERS;
+
+INSERT INTO ORDERS VALUES (40,'','DDD',4);
+INSERT INTO ORDERS VALUES (50,'','EEE',5);
+--NULL이 들어가는 것을 확인
+INSERT INTO ORDERS VALUES (60,400,'FFF',6);
+INSERT INTO ORDERS VALUES (70,400,'GGG',7);
+--중복값을 허용하지 않기 때문에 에러난다.
+
+--테이블 만들며 제약조건 생성
+CREATE TABLE TEST
+(ID NUMBER PRIMARY KEY, --NUMBER뒤에 자릴수 표시 안하면 원하는 만큼 넣을 수 있음
+NAME VARCHAR2(10),
+JUMIN VARCHAR2(14) CONSTRAINT TEST_JUMIN_UK UNIQUE);
+
+--[CHECK] 제약조건
+SELECT * FROM ORDERS ORDER BY NO;
+
+ALTER TABLE ORDERS
+ADD CONSTRAINT ORDERS_SNO_CK CHECK(SNO BETWEEN 100 AND 600);
+--SNO에 100~600 값만 줄 수 있다 -> 에러남 왜? 현재 NULL값이 있기 때문
+--이미 가지고 있는 데이터가 제약조건에 위배되는게 있다면 실행X
+--UNIQUE가 있다면 NULL이 있어도 상관x
+--SNO에게 SNO <=1000과 같은 값을 주거나 범위값을 줄수도 있다.
+
+INSERT INTO ORDERS VALUES (70,601,'GGG',7); --X 제약조건 위배
+INSERT INTO ORDERS VALUES (70,600,'GGG',7); --O 제약조건에 일치
+
+-- NOT NULL
+CREATE TABLE TEST1
+(NO NUMBER(4) PRIMARY KEY,
+NAME VARCHAR(10) CONSTRAINT TEST1_NAME_NN NOT NULL);
+
+INSERT INTO TEST1 VALUES(10,'AAA'); --O
+INSERT INTO TEST1 VALUES(20,''); --X NULL값이 들어가면 안된다.
+SELECT * FROM TEST1;
+DESC TEST1;
+
+SELECT * FROM USER_CONSTRAINTS;
+
+--CHECK 제약조건으로 NOT NULL만들기
+ALTER TABLE ORDERS
+ADD CONSTRAINT ORDERS_NAME_NN CHECK(NAME IS NOT NULL);
+
+--제약조건은 추가와 삭제만 가능함.(수정은 불가)
+SELECT * FROM CUSTOMER;
+DESC CUSTOMER;
+
+--[PRIMARY KEY는 비활성화]
+--PRIMARY KEY는 비활성화 작업이 가능하다.
+--하는이유? DB에 PK작업을 주면 새로운 INSERT값을 넣을 때 
+--비교하느라 속도가 너무 느려진다.
+/*일단 프라이머리 키 비활성화 하고 많은 양의 데이터를 넣은 후 
+활성화 시켰을때 활성화 실행이 안되면 값이 중복된것이 있다는 뜻이다.
+중복값을 다시 체크 해 수정한 후 활성화를 시킨다.*/
+
+ALTER TABLE CUSTOMER
+DISABLE PRIMARY KEY;
+--비활성화 확인방법 USER_CONSTRAINTS;의 STATUS에 DISABLED이라 표기됨
+
+SELECT * FROM USER_CONSTRAINTS;
+
+INSERT INTO CUSTOMER VALUES (1,'SHIN',20);
+SELECT * FROM CUSTOMER;
+
+SELECT * FROM CUSTOMER;
+
+--활성화 시키는 방법
+ALTER TABLE CUSTOMER
+ENABLE PRIMARY KEY;
+--만약 위에 중복값이 존재한다면 활성화를 시키지 못한다.
+--중복값을 삭제해야 활성화가 가능해진다.
+
+DELETE CUSTOMER WHERE NAME='SHIN';
+--중복값 삭제
+
+SELECT * FROM USER_CONSTRAINTS WHERE TABLE_NAME 
+IN('ORDERS','CATALOGS');
+
+--ORDERS의 값을 비활성화 시키면 참조한 CATALOGS는 어떻게 될까?
+--ALTER TABLE ORDERS
+--DISABLE PRIMARY KEY;
+--의존하고 있는(FOREIGN KEY)가 있기 때문에 에러난다.
+
+ALTER TABLE ORDERS
+DISABLE PRIMARY KEY CASCADE;
+--비활성화 됨
+
+SELECT * FROM USER_CONSTRAINTS WHERE TABLE_NAME 
+IN('ORDERS','CATALOGS');
+--CATALOG_FK,ORDERS_NO_PK 둘 다 DISABLED 된다.
+
+
+--DICTIONARY
+SELECT * FROM USER_CONSTRAINTS;
+
+SELECT * FROM DICTIONARY;
+--DICTIONARY와 역할을 하는 내용이 주석으로 적혀있음
+
+/*
+USER_ : USER 소유의 OBJECT에 관한 정보를 가지고 있음.
+ALL_ : USER에게 ACCESS가 허용된 OBJECT에 관한 정보 
+(내꺼는 아닌데 내가 써도 된다는 허락을 받음)
+DBA_ : DBA권한을 가진 USER가 ACCESS할 수 있는 정보
+V$ : SERVER의 성능에 관련된 정보
+*/
+
+SELECT * FROM V$VERSION;
+--SYSTEM에 대한 VSERION이 나온다.
+SELECT * FROM USER_CONS_COLUMNS;
+--TABLE의 어떤 COLUMNS에 어떤 제약조건을 가지고 있는지 출력
+SELECT * FROM ALL_CONS_COLUMNS;
+--나에게 ACCESS가 허용된 정보를 출력
+SELECT * FROM USER_TABLSE;
+--테이블의 정보를 자세하게 출력
+SELECT * FROM USER_TAB_PRIVS;
+--ROLE, 누구한테 권한을 줬는지 확인
+SELECT * FROM USER_SYS_PRIVS;
+--어떤 권한을 가지고 있는지 출력
+
+--[[VIEW]]
+--가상테이블
+--보안을 위해서 사용함
+--장점 - 조건문 사용이 가능함.
+--VIEW를 만들때 PK에 해당되는 COULMN은 반드시 입력해야한다.
+
+CREATE VIEW PER10_V
+AS
+SELECT * FROM PERSONNEL WHERE DNO = 10;
+--에러남, SYSTEM권한이기 때문에 DBA가 USER인 KIM에게 권한을 줘야함.
+--SYS에서 GRANT CREATE VIEW TO KIM;를 하고 실행하면 실행 됨.
+
+SELECT * FROM PER10_V;
+
+--PER10_V은 실제 존재하지 않지만 이름을 통해 PERSONNEL의 
+--DNO의 10번 값을 가진 사람들만 출력할 수 있게 해주는 가상테이블임.
+
+CREATE VIEW PER20_V
+AS
+SELECT PNO, PNAME, MANAGER, PAY, DNO FROM PERSONNEL;
+
+SELECT * FROM PER20_V;
+
+SELECT * FROM PER20_V WHERE DNO=20;
+--VIEW에서 조건문이 가능함.
+
+CREATE VIEW PER_AVG
+AS
+SELECT DNO, AVG(PAY) PAVG, SUM(PAY) PSUM
+FROM PERSONNEL
+GROUP BY DNO;
+--VIEW로 PER_AVG라는 가상테이블 생성
+
+SELECT * FROM PER_AVG;
+--각 부서의 월급 평균과 합계가 출력됨.
+
+SELECT * FROM PER_AVG WHERE PSUM>8000;
+--합계가 8000보다 큰 데이터만 출력
+--조건문 사용
+
+SELECT * FROM PER20_V;
+
+INSERT INTO PER20_V VALUES(1234,'JJJ',1001,2000,10);
+
+UPDATE PER20_V SET PNAME='INNA' WHERE PNO=1234;
+
+DELETE PER20_V WHERE PNO=1234;
+
+--JOIN문으로 만든 VIEW는 INSERT, UPDATE, DELETE(DML)이 안된다. 기억!!
+--JOIN문으로 만든 VIEW는 SELECT 목적으로 사용한다.
+--데이터를 변형하고 조작해서 만든 테이블이기 때문에 INSERT, UPDATE, DELETE 불가능
+
+CREATE VIEW PER
+AS
+SELECT PNAME, JOB, PAY FROM PERSONNEL;
+
+SELECT * FROM PER;
+
+INSERT INTO PER VALUES('BBB','ACCOUNT',3000);
+--실행 X "PERSONNEL"테이블에는 PNO라는 PK가 존재
+--PER가 만든 테이블에는 PNAME, JOB, PAY만 있으므로 PK의 값이 NULL
+--PK는 NULL이 될 수 없기 때문에 이 코드는 에러가 난다.
+
+SELECT * FROM PER_AVG;
+
+INSERT INTO PER_AVG VALUES(40,1234,5000);
+--실행 x, virtual column(파생컬럼임)
+--실재 존재하는 테이블도 아니고 원래 테이블의 값을 그룹바이에 의해
+--통계 값을 낸 것이다. 실제 테이블을 압축한 결과를 만든 가상테이블이기
+--때문에 다이렉트로 파생컬럼에서 값을 추가할 수 없다.
+--값을 추가 하고 싶으면 원래 테이블에 값을 추가해주어야 한다.
+
+--VIEW 수정
+--CREATE -> ALTER
+--CREATE OR REPLACE
+--생성하고 수정도 할수 있는 것임
+
+SELECT * FROM PER20_V;
+
+CREATE OR REPLACE VIEW PER20_V
+(번호, 이름, 직업, 부서번호)
+AS
+SELECT PNO, PNAME, JOB, DNO FROM PERSONNEL
+WHERE DNO = 20;
+--컬럼명을 수정함과 동시에 부서번호가 20번인 사람들만 출력
+
+CREATE OR REPLACE VIEW AAA
+AS
+SELECT * FROM PERSONNEL WHERE DNO=10;
+--AAA라는 VIEW는 없기 때문에 새로 생성이 된다.
+
+SELECT * FROM AAA;
+
+SELECT * FROM TAB;
+
+--JOIN문 VIEW
+
+DROP TABLE 고객정보 PURGE;
+DROP TABLE 회사정보 PURGE;
+
+
+CREATE TABLE 고객정보
+(고객번호 CHAR(10),
+이름 CHAR(10));
+
+CREATE TABLE 회사정보
+(고객번호 CHAR(10),
+회사명 CHAR(10));
+
+INSERT INTO 고객정보 VALUES('A001','배수지');
+INSERT INTO 고객정보 VALUES('A002','유인나');
+INSERT INTO 회사정보 VALUES('A001','LG');
+INSERT INTO 회사정보 VALUES('A002','HYUNDAI');
+
+SELECT * FROM 고객정보;
+SELECT * FROM 회사정보;
+
+CREATE OR REPLACE VIEW 정보
+AS
+SELECT A.고객번호, 이름, 회사명
+FROM 고객정보 A, 회사정보 B
+WHERE A.고객번호 = B.고객번호;
+
+SELECT * FROM 정보;
+
+--JOIN문으로 만든 VIEW는 INSERT, UPDATE,DELETE을 실행할 수 없다.
+INSERT INTO 정보 VALUES ('A003','정인선','SAMSUNG');
+UPDATE 정보 SET 이름='정인선' WHERE 고객번호 = 'A001';
+DELETE 정보 WHERE 고객번호 = 'A001';
+
+--[WITH CHECK OPTION]
+
+SELECT * FROM PER10_V;
+--10번 부서만 셀렉트 하는 뷰
+
+UPDATE PER10_V SET DNO= 20 WHERE PNO = 1111;
+
+SELECT * FROM PER10_V;
+--1111의 데이터가 보이지 않음 WHY? 부서번호를 10에서 20으로 바꿈
+
+SELECT * FROM PERSONNEL;
+
+CREATE OR REPLACE VIEW PER10_V
+AS
+SELECT * FROM PERSONNEL WHERE DNO = 10
+WITH CHECK OPTION CONSTRAINT DNO10_VU_CK;
+--체크 제약조건을 줌, WHERE DNO = 10조건의 범위를 벗어나지 말아라
+
+SELECT * FROM PER10_V;
+
+UPDATE PER10_V SET DNO= 20 WHERE PNO = 1001;
+-- WITH CHECK OPTION이 WHERE 조건절에 적용되었기 때문에 
+-- 이 조건을 벗어나지 말라는 뜻임.
+
+--[WITH READ ONLY]
+--VIEW를 통해 오로지 SELECT만 할 수 있게 하는 명령어
+CREATE OR REPLACE VIEW PER10_V
+AS
+SELECT PNO, PNAME, JOB FROM PERSONNEL WHERE DNO = 10
+WITH READ ONLY;
+--위에서 준 조건은 WITH READ ONLY을 입력하면서 사라진다.
+
+DELETE PER10_V WHERE PNO=1001;
+--오류남. WITH READ ONLY는 SELECT만 할 수 있음
+
+------------------------------------------------
+
+SELECT * FROM (SELECT * FROM PERSONNEL WHERE DNO=10) A
+WHERE PAY = 7000;
+--부서번호가 10번이면서 PAY가 7000인 사람
+
+--[TOP-N]
+--1~100명중 상위 20명을 추려라
+--셀렉트를 함과 동시에 20명만 추린 후 순위를 매겨서 출력해주는 것
+
+--가장 최근에 입사한 사원 5명을 찾아 이름과 입사 날짜를 출력하라
+SELECT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC;
+
+--[ROWNUM]
+SELECT ROWNUM, PNAME,STARTDATE FROM PERSONNEL;
+/*ROWNUM 데이터의 양과 상관없이 SELECT를 하는 순간에 
+바로 끊김없는 일렬번호를 붙여주는 것이다.*/
+
+SELECT ROWNUM, PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC;
+/*ROWNUM이 먼저 실행 된 후에 ORDER BY STARTDATE DESC가 나중에
+실행되기 때문에 나중에 실행된 값을 기준으로 정렬하기 때문에
+ROWNUM의 값이 뒤죽박죽이 되는 것이다.*/
+
+SELECT ROWNUM, PNAME, STARTDATE FROM
+(SELECT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC);
+--STARTDATE로 정렬한 후 ROWNUM으로 정렬했기 때문에
+--STARTDATE도 정렬횐 상태, ROWNUM도 순서대로 입력된다.
+
+SELECT ROWNUM, PNAME, STARTDATE FROM
+(SELECT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC)
+WHERE ROWNUM <= 5;
+--5명만 추출
+--FROM뒤에 또 다른 FROM이 나오는 이유다.
+
+SELECT RNUM, PNAME, STARTDATE FROM
+(SELECT ROWNUM RNUM, PNAME, STARTDATE FROM
+(SELECT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC))
+WHERE RNUM >=3 AND RNUM<=6;
+--SELECT ROWNUM은 두 번 작성할 수 없다.
+--WHERE RNUM >=3 AND RNUM<=6;의 값을 다이렉트로 주지 못하기 때문에
+--SELECT문을 ()로 한 번 더 묶어준 후 바깥의 ROWNUM에 별칭을 준 후
+--바깥의 수식에는 별칭 값으로 입력을 해준다.
+
+--MS-SQL 방식
+--훨씬 방법이 간단하다.Oracle에서는 출력이 x
+--상위 5명까지 출력해줘
+SELECT TOP 5 PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC;
+
+--상위 5%까지 출력해줘
+SELECT TOP 5 PERCENT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE DESC;
+
+--하위 5%까지 출력해줘
+SELECT TOP 5 PERCENT PNAME, STARTDATE FROM PERSONNEL
+ORDER BY STARTDATE ASC;
+
+
+--[INDEX]
+--게시판의 페이지 1~10, 11~20을 만들 때 활용
+--인덱스 내부에는 ROWID가 있기 때문에 
+--인덱스를 생성하는 순간 자동으로 생성됨 
+--데이터를 전부 뒤지지않고 인덱스 정렬된 정보를 통해 빠르게 찾을 수 있다. 
+
+--인덱스 생성
+CREATE INDEX PER_PAY_IDX
+ON PERSONNEL(PAY);
+
+SELECT * FROM TABS;
+
+SELECT ROWID, PNO,PNAME FROM PERSONNEL;
+ -- ROWID를 출력하는 값 
+ 
+SELECT * FROM USER_INDEXES; 
+ 
+ 
+SELECT * FROM USER_CONSTRAINTS;
+
+CREATE TABLE AA
+(ID NUMBER(4) CONSTRAINT AA_ID_PK PRIMARY KEY,
+NAME CHAR(10));
+
+
+--인덱스는 테이블이 아닌 컬럼에 만드는 것이다.
+--WHERE절 뒤에 컬럼명을 붙여준다.
+SELECT * FROM PERSONNEL WHERE DNO = 10;
+
+DROP INDEX PER_PAY_IDX;
+
+--[SEQUENCE] (일렬번호)
+--내가 데이터를 넣을때 번호가 자동으로 들어가는것
+--중복되지 않게 고유한 값을 자동으로 일렬로 넣어주는 것임.
+--숫자밖에 작성이 안됨.
+CREATE SEQUENCE DIV_DNO
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 10 -- NOMAXVALUE(MAX값이 없다. 계속 생성됨)
+NOCYCLE --값이 꽉차면 더이상 작성하지 말아라
+--CYCLE 1부터시작해서 10까지 값이 들어가면 다시 1부터 값이 생성된다.
+CACHE 20; -- NOCACHE
+--특정테이블에 데이터를 CACHE뒤의 숫자만큼 미리 메모리에 값을 
+--올려 놓기 때문에 실행속도가 빨라질 수 있음
+
+SELECT * FROM USER_SEQUENCES;
+
+/*
+NEXTVAL : SEQUENCE번호.NEXTVAL
+: 데이터를 입력하는 명령어
+CURRVAL : SEQUENCE번호.CURRVAL
+: 방금 집어 넣은 데이터를 확인하는 명령어(마지막)
+
+같은숫자를 반복해서 사용 할 수 없다. 한 번만 사용이 가능
+*/
+
+SELECT DIV_DNO.NEXTVAL FROM DUAL;
+
+INSERT INTO DIVISION VALUES (DIV_DNO.NEXTVAL,'AAA','AAA','AAA');
+--중복이 되지않기 때문에 고유의 값을 가진다.
+--위에서 저장한 최대 데이터값까지 입력을 하면 출력에러가 난다.
+SELECT * FROM DIVISION;
+
+SELECT DIV_DNO.CURRVAL FROM DUAL;
+
+
+--DIVISION말고 다른 테이블에도 사용이 가능
+INSERT INTO PERSONNEL (PNO) VALUES (DIV_DNO.NEXTVAL);
+
+SELECT * FROM PERSONNEL;
+
 
 
 
