@@ -102,5 +102,6 @@ GRANT CREATE ROLE TO KIM;
 --KIM은 CREATE ROLE권한을 받음 (+ALTER, DROP)
 
 
-
-
+--(22-07-08기준)
+GRANT CREATE VIEW TO KIM;
+--KIM에게 VIEW를 만들 수 있는 권한을 주는 것.
