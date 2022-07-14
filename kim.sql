@@ -1,6 +1,17 @@
 
 --Kim
 --(22.07.01)
+
+CREATE TABLE post (
+	seq  NUMBER  NOT NULL
+	,zipcode  VARCHAR2(10)
+	,sido  VARCHAR2(50)
+	,gugun  VARCHAR2(100)
+	,dong  VARCHAR2(100)
+	,bunji  VARCHAR2(50)
+        ,PRIMARY KEY (seq)
+);
+
 SELECT * FROM Tab;
 
 SELECT * FROM PERSONNEL;
@@ -1564,7 +1575,7 @@ NO NUMBER(4));
 SELECT * FROM USER_CONSTRAINTS;
 --DICTIONARY 확인, 생성된 테이블의 정보가 들어가 있어야한다.
 
---[TABLE LEVEL] 사용빈도 더 높음
+--TABLE LEVEL 사용빈도 더 높음
 CREATE TABLE ORDERS
 (NO NUMBER(4),
 SNO NUMBER(4),
@@ -1577,11 +1588,12 @@ SELECT * FROM USER_CONSTRAINTS;
 DESC ORDERS;
 DESC CUSTOMER;
 
---[FOREIGN KEY]
+
 --CUSTOMER와 ORDERS 사이에 FOREIGN KEY를 만들것임
 --NO라는 COLUMN을 참조 할 수 있게 FOREIGN KEY 생성
+
 --이미 테이블이 생성된 상태
---CUSTOMER가 ORDERS를 참조하는 것이기 때문에 FOREIGN KEY는 CUSTOMER에 생성함
+--커스터머가 오더를 참조하는 것이기 때문에 커스터머에 포린키 생성
 ALTER TABLE CUSTOMER
 ADD CONSTRAINT CUSTOMER_NO_FK FOREIGN KEY(NO)
 REFERENCES ORDERS(NO); --ORDERS의 NO를 참조해야함
@@ -1602,14 +1614,14 @@ SELECT * FROM ORDERS;
 SELECT * FROM CUSTOMER;
 
 INSERT INTO CUSTOMER VALUES (1,'SUZI',20); --실행 O
--- 위에 NO와 동일해야하기 때문에 같은 값의 숫자를 넣어 실행O
+-- 위에 NO와 동일해야하기 때문에 같은 값의 숫자를 넣음
 INSERT INTO CUSTOMER VALUES (1,'INNA',20); --실행 X
--- PK(NO)를 동일한 값을 넣었기 때문에 에러가 난다.
+-- PK를 동일한 값을 넣었기 때문에 에러가 난다.
 
 INSERT INTO CUSTOMER VALUES (2,'INNA',30); --실행 O
  
 INSERT INTO CUSTOMER VALUES (3,'SHIN',40); --실행 X
---FOREIGN KEY 에러가 뜬다. 40은 위에 값 중에 없기 때문
+--포린키 에러가 뜬다. 40은 위에 값 중에 없기 때문
 
 COMMIT;
 --방금 입력했던 INSERT문이 DB에 들어갔다. 
@@ -1638,7 +1650,7 @@ INSERT INTO CATALOGS VALUES (2,'DEF',40);
 SELECT * FROM ORDERS;
 DESC ORDERS;
 
---이미 생성된 테이블에 제약조건 만들기
+--이미 생성된 테이블에 제약조건
 ALTER TABLE ORDERS
 ADD CONSTRAINT ORDERS_SNO_UK UNIQUE(SNO);
 
@@ -1709,8 +1721,6 @@ SELECT * FROM USER_CONSTRAINTS;
 INSERT INTO CUSTOMER VALUES (1,'SHIN',20);
 SELECT * FROM CUSTOMER;
 
-SELECT * FROM CUSTOMER;
-
 --활성화 시키는 방법
 ALTER TABLE CUSTOMER
 ENABLE PRIMARY KEY;
@@ -1726,7 +1736,7 @@ IN('ORDERS','CATALOGS');
 --ORDERS의 값을 비활성화 시키면 참조한 CATALOGS는 어떻게 될까?
 --ALTER TABLE ORDERS
 --DISABLE PRIMARY KEY;
---의존하고 있는(FOREIGN KEY)가 있기 때문에 에러난다.
+--의존하고 있는(포린키)가 있기 때문에 에러난다.
 
 ALTER TABLE ORDERS
 DISABLE PRIMARY KEY CASCADE;
@@ -1795,14 +1805,13 @@ AS
 SELECT DNO, AVG(PAY) PAVG, SUM(PAY) PSUM
 FROM PERSONNEL
 GROUP BY DNO;
---VIEW로 PER_AVG라는 가상테이블 생성
+--VIEW로 가상테이블 생성
 
 SELECT * FROM PER_AVG;
 --각 부서의 월급 평균과 합계가 출력됨.
 
 SELECT * FROM PER_AVG WHERE PSUM>8000;
 --합계가 8000보다 큰 데이터만 출력
---조건문 사용
 
 SELECT * FROM PER20_V;
 
@@ -1894,8 +1903,8 @@ INSERT INTO 정보 VALUES ('A003','정인선','SAMSUNG');
 UPDATE 정보 SET 이름='정인선' WHERE 고객번호 = 'A001';
 DELETE 정보 WHERE 고객번호 = 'A001';
 
---[WITH CHECK OPTION]
-
+--WITH CHECK OPTION
+--
 SELECT * FROM PER10_V;
 --10번 부서만 셀렉트 하는 뷰
 
@@ -1918,7 +1927,7 @@ UPDATE PER10_V SET DNO= 20 WHERE PNO = 1001;
 -- WITH CHECK OPTION이 WHERE 조건절에 적용되었기 때문에 
 -- 이 조건을 벗어나지 말라는 뜻임.
 
---[WITH READ ONLY]
+--WITH READ ONLY
 --VIEW를 통해 오로지 SELECT만 할 수 있게 하는 명령어
 CREATE OR REPLACE VIEW PER10_V
 AS
@@ -2001,6 +2010,7 @@ ORDER BY STARTDATE ASC;
 --인덱스 생성
 CREATE INDEX PER_PAY_IDX
 ON PERSONNEL(PAY);
+--인덱스 생성
 
 SELECT * FROM TABS;
 
@@ -2023,7 +2033,7 @@ SELECT * FROM PERSONNEL WHERE DNO = 10;
 
 DROP INDEX PER_PAY_IDX;
 
---[SEQUENCE] (일렬번호)
+--SEQUENCE (일렬번호)
 --내가 데이터를 넣을때 번호가 자동으로 들어가는것
 --중복되지 않게 고유한 값을 자동으로 일렬로 넣어주는 것임.
 --숫자밖에 작성이 안됨.
@@ -2062,6 +2072,8 @@ SELECT DIV_DNO.CURRVAL FROM DUAL;
 INSERT INTO PERSONNEL (PNO) VALUES (DIV_DNO.NEXTVAL);
 
 SELECT * FROM PERSONNEL;
+
+
 
 
 
