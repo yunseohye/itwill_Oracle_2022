@@ -1,4 +1,16 @@
 --SYS
+CREATE TABLE post (
+	seq  NUMBER  NOT NULL
+	,zipcode  VARCHAR2(10)
+	,sido  VARCHAR2(50)
+	,gugun  VARCHAR2(100)
+	,dong  VARCHAR2(100)
+	,bunji  VARCHAR2(50)
+        ,PRIMARY KEY (seq)
+);
+commit;
+drop table post PURGE;
+
  --(22.07.07)±‚¡ÿ
 --dictionary
 SELECT * FROM DBA_UNUSED_COL_TABS;
