@@ -2,16 +2,6 @@
 --Kim
 --(22.07.01)
 
-CREATE TABLE post (
-	seq  NUMBER  NOT NULL
-	,zipcode  VARCHAR2(10)
-	,sido  VARCHAR2(50)
-	,gugun  VARCHAR2(100)
-	,dong  VARCHAR2(100)
-	,bunji  VARCHAR2(50)
-        ,PRIMARY KEY (seq)
-);
-
 SELECT * FROM Tab;
 
 SELECT * FROM PERSONNEL;
@@ -921,7 +911,6 @@ WHERE DNO = &D_NO;
 --수업들은 것 메모에서 확인하기.
 
 --SUBQUERY를 사용해서 INSERT
---물어보기ㅣㅣㅣㅣㅣㅣ
 SELECT * FROM MANAGER; 
 --매니저 테이블을 위에서 생성함. 값은 없기 때문에 출력에 아무것도 안됨
 
